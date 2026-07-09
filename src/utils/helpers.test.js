@@ -8,7 +8,10 @@ import {
   getBusiestGate,
   getQuietestGate,
   resolveUserRole,
-  calculateGateCoordinates
+  calculateGateCoordinates,
+  addNewIncident,
+  addNewTask,
+  moveTaskState
 } from "./helpers";
 
 describe("sanitizeInput utility", () => {
@@ -227,5 +230,73 @@ describe("calculateGateCoordinates helper", () => {
   it("should fallback to center for invalid inputs", () => {
     expect(calculateGateCoordinates(null, 100)).toEqual({ x: 200, y: 200 });
     expect(calculateGateCoordinates(90, null)).toEqual({ x: 200, y: 200 });
+  });
+});
+
+describe("addNewIncident helper", () => {
+  it("should append a new incident and increment id", () => {
+    const list = [{ id: 1, type: "Medical", loc: "Section 214", ai: "ETA 2 min", sev: "high" }];
+    const nextList = addNewIncident(list, "Lost item", "Gate C", "low", "Found key log");
+    expect(nextList).toHaveLength(2);
+    expect(nextList[1]).toEqual({
+      id: 2,
+      type: "Lost item",
+      loc: "Gate C",
+      sev: "low",
+      ai: "Found key log"
+    });
+  });
+
+  it("should handle empty or invalid lists", () => {
+    expect(addNewIncident(null, "Medical", "Gate A", "high", "alert")).toEqual([]);
+    expect(addNewIncident([], "Medical", "Gate A", "high", "alert")).toEqual([
+      { id: 1, type: "Medical", loc: "Gate A", ai: "alert", sev: "high" }
+    ]);
+  });
+});
+
+describe("addNewTask helper", () => {
+  it("should append a new task to the correct column and increment ID", () => {
+    const tasks = {
+      urgent: [{ id: 1, title: "task 1", tag: "Ops" }],
+      inProgress: [],
+      done: []
+    };
+    const nextTasks = addNewTask(tasks, "urgent", "task 2", "Safety");
+    expect(nextTasks.urgent).toHaveLength(2);
+    expect(nextTasks.urgent[1]).toEqual({ id: 2, title: "task 2", tag: "Safety" });
+  });
+
+  it("should handle empty or invalid tasks states", () => {
+    expect(addNewTask(null, "urgent", "task", "tag")).toEqual({});
+  });
+});
+
+describe("moveTaskState helper", () => {
+  it("should move task from urgent to inProgress column", () => {
+    const tasks = {
+      urgent: [{ id: 1, title: "task 1", tag: "Ops" }],
+      inProgress: [],
+      done: []
+    };
+    const next = moveTaskState(tasks, 1, "inProgress");
+    expect(next.urgent).toHaveLength(0);
+    expect(next.inProgress).toHaveLength(1);
+    expect(next.inProgress[0]).toEqual({ id: 1, title: "task 1", tag: "Ops" });
+  });
+
+  it("should return empty columns if task is not found", () => {
+    const tasks = {
+      urgent: [{ id: 1, title: "task 1", tag: "Ops" }],
+      inProgress: [],
+      done: []
+    };
+    const next = moveTaskState(tasks, 999, "inProgress");
+    expect(next.urgent).toHaveLength(1);
+    expect(next.inProgress).toHaveLength(0);
+  });
+
+  it("should handle invalid task state", () => {
+    expect(moveTaskState(null, 1, "done")).toEqual({});
   });
 });

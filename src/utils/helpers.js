@@ -185,3 +185,84 @@ export function calculateGateCoordinates(angle, radius, centerX = 200, centerY =
     y: Math.round((centerY + radius * Math.sin(rad)) * 100) / 100
   };
 }
+
+/**
+ * Adds a new operational incident to the incident list.
+ * @param {Array<{id: number, type: string, loc: string, ai: string, sev: string}>} incidentsList 
+ * @param {string} type 
+ * @param {string} location 
+ * @param {string} severity 
+ * @param {string} description 
+ * @returns {Array<{id: number, type: string, loc: string, ai: string, sev: string}>} New incident list
+ */
+export function addNewIncident(incidentsList, type, location, severity, description) {
+  if (!Array.isArray(incidentsList)) return [];
+  const nextId = incidentsList.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+  return [
+    ...incidentsList,
+    {
+      id: nextId,
+      type: type || "General",
+      loc: location || "Unknown",
+      ai: description || "AI assessment in progress.",
+      sev: severity || "low"
+    }
+  ];
+}
+
+/**
+ * Adds a new task to the task board state.
+ * @param {Record<string, Array<{id: number, title: string, tag: string}>>} tasksState 
+ * @param {string} columnKey 
+ * @param {string} title 
+ * @param {string} tag 
+ * @returns {Record<string, Array<{id: number, title: string, tag: string}>>} Updated tasks state
+ */
+export function addNewTask(tasksState, columnKey, title, tag) {
+  if (!tasksState || typeof tasksState !== 'object') return {};
+  const column = tasksState[columnKey] || [];
+  const allTasks = [
+    ...(tasksState.urgent || []),
+    ...(tasksState.inProgress || []),
+    ...(tasksState.done || [])
+  ];
+  const nextId = allTasks.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+  return {
+    ...tasksState,
+    [columnKey]: [
+      ...column,
+      { id: nextId, title: title || "New Task", tag: tag || "Ops" }
+    ]
+  };
+}
+
+/**
+ * Transitions a task to a target workflow column status.
+ * @param {Record<string, Array<{id: number, title: string, tag: string}>>} tasks 
+ * @param {number} taskId 
+ * @param {string} targetColumn 
+ * @returns {Record<string, Array<{id: number, title: string, tag: string}>>} Updated tasks state
+ */
+export function moveTaskState(tasks, taskId, targetColumn) {
+  if (!tasks || typeof tasks !== 'object') return {};
+  let foundTask = null;
+  const nextTasks = {
+    urgent: (tasks.urgent || []).filter(t => {
+      if (t.id === taskId) { foundTask = t; return false; }
+      return true;
+    }),
+    inProgress: (tasks.inProgress || []).filter(t => {
+      if (t.id === taskId) { foundTask = t; return false; }
+      return true;
+    }),
+    done: (tasks.done || []).filter(t => {
+      if (t.id === taskId) { foundTask = t; return false; }
+      return true;
+    })
+  };
+
+  if (foundTask && nextTasks[targetColumn]) {
+    nextTasks[targetColumn] = [...nextTasks[targetColumn], foundTask];
+  }
+  return nextTasks;
+}
