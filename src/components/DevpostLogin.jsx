@@ -84,6 +84,15 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
     }, 1200);
   };
 
+  const handleOAuthLogin = (provider) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsValidated(true);
+      onLoginSuccess({ email: `${provider}-user@fifa.com`, role: selectedRole });
+    }, 1000);
+  };
+
   const roleStyles = {
     fan: "bg-emerald-600 text-white ring-2 ring-emerald-600 ring-offset-2 ring-offset-slate-900 border-emerald-500",
     organizer: "bg-purple-600 text-white ring-2 ring-purple-600 ring-offset-2 ring-offset-slate-900 border-purple-500",
@@ -339,7 +348,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
             </span>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => alert("Google Auth simulation: Redirecting to Devpost Auth context...")}
+                onClick={() => handleOAuthLogin("google")}
                 className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
@@ -348,7 +357,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
                 Google
               </button>
               <button
-                onClick={() => alert("Github Auth simulation: Redirecting to Devpost Auth context...")}
+                onClick={() => handleOAuthLogin("github")}
                 className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
