@@ -44,7 +44,7 @@ const COLORS = {
 /* =========================================================
    CHAT WIDGET
 ========================================================= */
-const ChatWidget = React.memo(function ChatWidget() {
+const ChatWidget = React.memo(function ChatWidget({ densities }) {
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState("en");
   const [messages, setMessages] = useState([{ from: "bot", text: GREETING.en }]);
@@ -67,7 +67,7 @@ const ChatWidget = React.memo(function ChatWidget() {
     setInput("");
     setTyping(true);
     setTimeout(() => {
-      const reply = matchReply(clean, lang);
+      const reply = matchReply(clean, lang, densities);
       setMessages((prev) => [...prev, { from: "bot", text: reply }]);
       setTyping(false);
     }, 700 + Math.random() * 500);
@@ -90,13 +90,11 @@ const ChatWidget = React.memo(function ChatWidget() {
         <div
           role="dialog"
           aria-label="StadiumAI chat assistant"
-          className="fixed z-50 bottom-0 right-0 sm:bottom-5 sm:right-5 w-full sm:w-[380px] h-[85vh] sm:h-[520px] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800"
-          style={{ background: "#0F1E33" }}
+          className="fixed z-50 bottom-0 right-0 sm:bottom-5 sm:right-5 w-full sm:w-[380px] h-[85vh] sm:h-[520px] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-[#0F1E33]"
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-4 py-3 border-b border-slate-800"
-            style={{ background: "#0A1524" }}
+            className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-[#0A1524]"
           >
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#F2B84C] to-[#C99328]">
@@ -255,9 +253,9 @@ const FanView = React.memo(function FanView({ densities, highContrast, setHighCo
         </div>
         <StadiumBowl densities={densities} highContrast={highContrast} />
         <div className="flex justify-center gap-4 mt-3 text-xs text-white/75">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS.green }} /> Clear</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS.gold }} /> Moderate</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS.coral }} /> Busy</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#2E7D5B]" /> Clear</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#F2B84C]" /> Moderate</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#E2583E]" /> Busy</span>
         </div>
       </div>
 
@@ -382,7 +380,7 @@ const OrganizerView = React.memo(function OrganizerView({ incidents }) {
               <h4 className="font-bold text-white mb-4 flex items-center gap-2">
                 <Trophy size={16} className="text-[#F2B84C]" /> Entry rate over time
               </h4>
-              <div style={{ width: "100%", height: 220 }}>
+              <div className="w-full h-[220px]">
                 <ResponsiveContainer>
                   <LineChart data={ENTRY_DATA}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -399,7 +397,7 @@ const OrganizerView = React.memo(function OrganizerView({ incidents }) {
               <h4 className="font-bold text-white mb-4 flex items-center gap-2">
                 <Shield size={16} className="text-emerald-400" /> Gate-wise capacity
               </h4>
-              <div style={{ width: "100%", height: 220 }}>
+              <div className="w-full h-[220px]">
                 <ResponsiveContainer>
                   <BarChart data={GATE_BAR}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -422,11 +420,13 @@ const OrganizerView = React.memo(function OrganizerView({ incidents }) {
               {incidents.map((inc) => (
                 <div key={inc.id} className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-950/60 border border-slate-850/50">
                   <span
-                    className="text-[9px] font-bold px-2 py-1 rounded-full shrink-0 mt-0.5"
-                    style={{
-                      background: inc.sev === "high" ? COLORS.coral : inc.sev === "med" ? COLORS.gold : COLORS.green,
-                      color: inc.sev === "med" ? COLORS.navyDeep : "white",
-                    }}
+                    className={`text-[9px] font-bold px-2 py-1 rounded-full shrink-0 mt-0.5 ${
+                      inc.sev === "high" 
+                        ? "bg-[#E2583E] text-white" 
+                        : inc.sev === "med" 
+                          ? "bg-[#F2B84C] text-[#0A1524]" 
+                          : "bg-[#2E7D5B] text-white"
+                    }`}
                   >
                     {inc.type.toUpperCase()}
                   </span>
@@ -506,7 +506,13 @@ const VolunteerView = React.memo(function VolunteerView({ tasks, onMoveTask }) {
         <div key={c.key} className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: c.color }} />
+              <span className={`w-2 h-2 rounded-full animate-pulse ${
+                c.key === "urgent" 
+                  ? "bg-[#E2583E]" 
+                  : c.key === "inProgress" 
+                    ? "bg-[#F2B84C]" 
+                    : "bg-[#2E7D5B]"
+              }`} />
               <h4 className="font-bold text-sm text-white">{c.label} Tasks</h4>
               <span className="text-xs ml-auto text-slate-500 font-extrabold bg-slate-950 px-2 py-0.5 rounded border border-slate-850">{c.items.length}</span>
             </div>
@@ -718,8 +724,9 @@ export default function StadiumAI({ session, onLogout }) {
               <button
                 key={r.key}
                 onClick={() => { setRole(r.key); setNavOpen(false); }}
-                className="px-4 py-2.5 rounded-lg text-xs font-bold text-left transition-colors text-slate-300 hover:text-white"
-                style={{ background: role === r.key ? "rgba(242,184,76,0.15)" : "transparent", color: role === r.key ? "#F2B84C" : "inherit" }}
+                className={`px-4 py-2.5 rounded-lg text-xs font-bold text-left transition-colors ${
+                  role === r.key ? "bg-[#F2B84C]/15 text-[#F2B84C]" : "text-slate-300 hover:text-white"
+                }`}
               >
                 {r.label}
               </button>
@@ -729,7 +736,7 @@ export default function StadiumAI({ session, onLogout }) {
 
         {/* Scoreboard ticker */}
         <div className="border-t border-slate-800/80 overflow-hidden bg-slate-950/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center gap-6 text-[10px] font-mono font-bold overflow-x-auto whitespace-nowrap" style={{ color: COLORS.gold }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center gap-6 text-[10px] font-mono font-bold overflow-x-auto whitespace-nowrap text-[#F2B84C]">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />FANS IN STADIUM: {ticker.toLocaleString()}</span>
             <span className="opacity-30">·</span>
             <span>GATE D STATUS: CLEAR (35%)</span>
@@ -858,7 +865,7 @@ export default function StadiumAI({ session, onLogout }) {
         </main>
       </div>
 
-      <ChatWidget />
+      <ChatWidget densities={densities} />
     </div>
   );
 }

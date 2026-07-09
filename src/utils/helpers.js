@@ -52,42 +52,56 @@ export function validateLogin(email, password) {
  * Supports multilingual routes for English, Spanish, French, Hindi, and Portuguese.
  * @param {string} msg 
  * @param {string} lang 
+ * @param {object} densities 
  * @returns {string}
  */
-export function matchReply(msg, lang) {
+export function matchReply(msg, lang, densities) {
   const m = msg.toLowerCase();
+  const busiest = getBusiestGate(densities);
+  const quietest = getQuietestGate(densities);
+
   const R = {
     en: {
       restroom: "🤖 **GenAI Live Route Recommendation**: Based on live occupancy sensors, restrooms behind Section 112 have a 3-minute wait. However, Section 114 restrooms are currently vacant (0 min wait). Accessible paths are clear.",
-      gate: "🤖 **GenAI Predictive Crowd Routing**: Gate C is running at 88% capacity (15 min wait). I recommend shifting to Gate D (35% capacity, under 2 min wait). Lot 4 shuttle departs in 6 min to assist.",
+      gate: busiest && quietest
+        ? `🤖 **GenAI Predictive Crowd Routing**: Gate ${busiest[0]} is running at ${Math.round(busiest[1])}% capacity (heavy congestion). I recommend shifting to Gate ${quietest[0]} (${Math.round(quietest[1])}% capacity, under 2 min wait).`
+        : "🤖 **GenAI Predictive Crowd Routing**: Gate C is running at 88% capacity (15 min wait). I recommend shifting to Gate D (35% capacity, under 2 min wait). Lot 4 shuttle departs in 6 min to assist.",
       shuttle: "🤖 **GenAI Transport Estimate**: Next shuttle to Downtown Transit Hub departs in 12 min from Lot 4. Exit shuttle frequency will pre-route to every 6 min to manage exit surges.",
       wheelchair: "🤖 **GenAI Accessibility Route**: Accessible path active. Direct ramp access at Gate B, elevator to upper tier. Refill stations are 15m from the elevator exit.",
       default: "🤖 **StadiumAI Concierge**: I can guide you through live gate capacities, transport schedules, accessible routes, and sustainability. Tap a quick-reply or ask a new question.",
     },
     es: {
       restroom: "🤖 **GenAI - Recomendación de baño**: El baño detrás de la Sección 112 tiene una espera de 3 min. El de la Sección 114 está vacío (0 min de espera). Ruta accesible habilitada.",
-      gate: "🤖 **GenAI - Tránsito de puertas**: La Puerta C está al 88% de capacidad (15 min espera). La Puerta D está más despejada (35% de capacidad, 2 min espera).",
+      gate: busiest && quietest
+        ? `🤖 **GenAI - Tránsito de puertas**: La Puerta ${busiest[0]} está al ${Math.round(busiest[1])}% de capacidad. Recomiendo cambiar a la Puerta ${quietest[0]} (${Math.round(quietest[1])}% de capacidad, menos de 2 min de espera).`
+        : "🤖 **GenAI - Tránsito de puertas**: La Puerta C está al 88% de capacidad (15 min espera). La Puerta D está más despejada (35% de capacidad, 2 min espera).",
       shuttle: "🤖 **GenAI - Transporte**: El próximo shuttle al centro sale en 12 min del Lote 4. La frecuencia se incrementará a cada 6 min tras el partido.",
       wheelchair: "🤖 **GenAI - Accesibilidad**: Ruta sin barreras activada. Rampa de acceso en la Puerta B, ascensor a tu sección sin escaleras.",
       default: "🤖 **Asistente StadiumAI**: Puedo ayudarte con capacidad de puertas, transportes y accesibilidad. Elige una opción rápida abajo.",
     },
     fr: {
       restroom: "🤖 **GenAI - Recommandation toilettes**: Toilettes Section 112 attente 3 min. Section 114 actuellement libre (0 min attente). Itinéraire accessible libre.",
-      gate: "🤖 **GenAI - Analyse des portes**: La Porte C est encombrée à 88% (15 min attente). Choisissez la Porte D (35%, moins de 2 min d'attente).",
+      gate: busiest && quietest
+        ? `🤖 **GenAI - Analyse des portes**: La Porte ${busiest[0]} est encombrée à ${Math.round(busiest[1])}%. Choisissez la Porte ${quietest[0]} (${Math.round(quietest[1])}%, moins de 2 min d'attente).`
+        : "🤖 **GenAI - Analyse des portes**: La Porte C est encombrée à 88% (15 min attente). Choisissez la Porte D (35%, moins de 2 min d'attente).",
       shuttle: "🤖 **GenAI - Navettes**: Départ dans 12 min du Parking 4. Fréquence augmentée à 6 min après le match.",
       wheelchair: "🤖 **GenAI - Itinéraire PMR**: Accès rampe par la Porte B, ascenseur direct sans marches.",
       default: "🤖 **Concierge StadiumAI**: Posez-moi des questions sur les portes, les navettes, ou l'accessibilité.",
     },
     hi: {
       restroom: "🤖 **GenAI - शौचालय मार्ग**: सेक्शन 112 के पीछे शौचालय में 3 मिनट की प्रतीक्षा है। हालांकि, सेक्शन 114 का शौचालय खाली है (0 मिनट प्रतीक्षा)। सुगम मार्ग सक्रिय है।",
-      gate: "🤖 **GenAI - गेट क्षमता**: गेट C पर 88% भीड़ है (15 मिनट प्रतीक्षा)। शांत प्रवेश के लिए गेट D (35% क्षमता, 2 मिनट प्रतीक्षा) का उपयोग करें।",
+      gate: busiest && quietest
+        ? `🤖 **GenAI - गेट क्षमता**: गेट ${busiest[0]} पर ${Math.round(busiest[1])}% भीड़ है। शांत प्रवेश के लिए गेट ${quietest[0]} (${Math.round(quietest[1])}% क्षमता, 2 मिनट प्रतीक्षा) का उपयोग करें।`
+        : "🤖 **GenAI - गेट क्षमता**: गेट C पर 88% भीड़ है (15 मिनट प्रतीक्षा)। शांत प्रवेश के लिए गेट D (35% क्षमता, 2 मिनट प्रतीक्षा) का उपयोग करें।",
       shuttle: "🤖 **GenAI - शटल सेवा**: अगली शटल लॉट 4 से 12 मिनट में प्रस्थान करेगी। मैच के बाद फ्रीक्वेंसी बढ़ाकर हर 6 मिनट की जाएगी।",
       wheelchair: "🤖 **GenAI - व्हीलचेयर मार्ग**: सुगम्य मार्ग सक्रिय: गेट B पर रैंप, आपके सेक्शन तक लिफ्ट उपलब्ध है, कोई सीढ़ियां नहीं।",
       default: "🤖 **StadiumAI सहायक**: मैं गेट वेटिंग, शटल समय और सुगम्य मार्ग की जानकारी दे सकता हूं। नीचे दिए गए विकल्प चुनें।",
     },
     pt: {
       restroom: "🤖 **GenAI - Recomendação de Banheiro**: Com base nos sensores de ocupação ao vivo, os banheiros atrás da Seção 112 têm uma espera de 3 minutos. No entanto, os banheiros da Seção 114 estão vazios (0 min de espera). Rota acessível desobstruída.",
-      gate: "🤖 **GenAI - Roteamento Preditivo de Multidões**: O Portão C está operando com 88% de capacidade (15 min de espera). Recomendo ir para o Portão D (35% de capacidade, menos de 2 min de espera). O ônibus do Estacionamento 4 parte em 6 min para ajudar.",
+      gate: busiest && quietest
+        ? `🤖 **GenAI - Roteamento Preditivo de Multidões**: O Portão ${busiest[0]} está operando com ${Math.round(busiest[1])}% de capacidade. Recomendo ir para o Portão ${quietest[0]} (${Math.round(quietest[1])}% de capacidade, menos de 2 min de espera).`
+        : "🤖 **GenAI - Roteamento Preditivo de Multidões**: O Portão C está operando com 88% de capacidade (15 min de espera). Recomendo ir para o Portão D (35% de capacidade, menos de 2 min de espera). O ônibus do Estacionamento 4 parte em 6 min para ajudar.",
       shuttle: "🤖 **GenAI - Estimativa de Transporte**: O próximo ônibus para o Centro de Transporte sai em 12 min do Estacionamento 4. A frequência dos ônibus será ajustada para cada 6 min para gerenciar o fluxo de saída.",
       wheelchair: "🤖 **GenAI - Rota de Acessibilidade**: Rota acessível ativa. Acesso direto por rampa no Portão B, elevador para o nível superior. Estações de recarga de água ficam a 15m da saída do elevador.",
       default: "🤖 **StadiumAI Concierge**: Posso orientá-lo sobre a capacidade dos portões, horários de transporte, rotas acessíveis e sustentabilidade. Toque em uma resposta rápida ou faça uma nova pergunta.",

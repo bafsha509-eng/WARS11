@@ -132,6 +132,13 @@ describe("matchReply multilingual chatbot routing", () => {
     expect(matchReply("Where is the restroom?", "de")).toContain("occupancy sensors");
     expect(matchReply("unknown query details", "de")).toContain("StadiumAI Concierge");
   });
+
+  it("should resolve gate queries dynamically when densities is provided", () => {
+    const densities = { A: 10, B: 90, C: 40 };
+    const reply = matchReply("How long is the gate wait?", "en", densities);
+    expect(reply).toContain("Gate B is running at 90%");
+    expect(reply).toContain("Gate A (10%");
+  });
 });
 
 describe("getGateTrafficLevel helper classification", () => {
