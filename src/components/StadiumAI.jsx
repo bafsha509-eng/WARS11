@@ -1,5 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { sanitizeInput, matchReply, getGateTrafficLevel, calculateCo2Savings } from "../utils/helpers";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { 
+  sanitizeInput, 
+  matchReply, 
+  getGateTrafficLevel, 
+  calculateCo2Savings,
+  getBusiestGate,
+  getQuietestGate,
+  resolveUserRole,
+  calculateGateCoordinates
+} from "../utils/helpers";
 import {
   GATES, ENTRY_DATA, GATE_BAR, INCIDENTS, TASKS, LANGUAGES, QUICK_REPLIES, GREETING
 } from "../utils/constants";
@@ -204,9 +213,7 @@ const StadiumBowl = React.memo(function StadiumBowl({ densities, highContrast })
 
       {GATES.map((g) => {
         const v = densities[g.id] ?? g.base;
-        const rad = (g.angle * Math.PI) / 180;
-        const gx = cx + (r + 35) * Math.cos(rad);
-        const gy = cy + (r + 35) * Math.sin(rad);
+        const { x: gx, y: gy } = calculateGateCoordinates(g.angle, r + 35, cx, cy);
         const color = levelColor(v);
         return (
           <g key={g.id}>
@@ -226,15 +233,9 @@ const StadiumBowl = React.memo(function StadiumBowl({ densities, highContrast })
 /* =========================================================
    FAN VIEW
 ========================================================= */
-function FanView({ densities, highContrast, setHighContrast }) {
-  const busiest = useMemo(() => {
-    const entries = Object.entries(densities);
-    return entries.sort((a, b) => b[1] - a[1])[0];
-  }, [densities]);
-  const quietest = useMemo(() => {
-    const entries = Object.entries(densities);
-    return entries.sort((a, b) => a[1] - b[1])[0];
-  }, [densities]);
+const FanView = React.memo(function FanView({ densities, highContrast, setHighContrast }) {
+  const busiest = useMemo(() => getBusiestGate(densities), [densities]);
+  const quietest = useMemo(() => getQuietestGate(densities), [densities]);
 
   const co2SavedValue = useMemo(() => {
     return calculateCo2Savings('metro', 10) + calculateCo2Savings('shuttle', 8);
@@ -305,12 +306,12 @@ function FanView({ densities, highContrast, setHighContrast }) {
       </div>
     </div>
   );
-}
+});
 
 /* =========================================================
    ORGANIZER VIEW
 ========================================================= */
-function OrganizerView() {
+const OrganizerView = React.memo(function OrganizerView() {
   const [decisions, setDecisions] = useState([
     {
       id: 1,
@@ -338,7 +339,7 @@ function OrganizerView() {
     }
   ]);
 
-  const handleDispatch = (id) => {
+  const handleDispatch = useCallback((id) => {
     setDecisions(prev => prev.map(d => {
       if (d.id === id) {
         return {
@@ -349,7 +350,7 @@ function OrganizerView() {
       }
       return d;
     }));
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -485,12 +486,12 @@ function OrganizerView() {
       </div>
     </div>
   );
-}
+});
 
 /* =========================================================
    VOLUNTEER VIEW
 ========================================================= */
-function VolunteerView() {
+const VolunteerView = React.memo(function VolunteerView() {
   const cols = [
     { key: "urgent", label: "Urgent", color: COLORS.coral, items: TASKS.urgent },
     { key: "inProgress", label: "In progress", color: COLORS.gold, items: TASKS.inProgress },
@@ -522,16 +523,13 @@ function VolunteerView() {
       ))}
     </div>
   );
-}
+});
 
 /* =========================================================
    ROOT APP
 ========================================================= */
 export default function StadiumAI({ session, onLogout }) {
-  const [role, setRole] = useState(() => {
-    if (session && session.role === "staff") return "volunteer";
-    return session ? session.role : "fan";
-  });
+  const [role, setRole] = useState(() => resolveUserRole(session));
   const [highContrast, setHighContrast] = useState(false);
   const [densities, setDensities] = useState(() =>
     Object.fromEntries(GATES.map((g) => [g.id, g.base]))

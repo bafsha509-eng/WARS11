@@ -43,6 +43,7 @@ export const LANGUAGES = [
   { code: "es", label: "Español" },
   { code: "fr", label: "Français" },
   { code: "hi", label: "हिंदी" },
+  { code: "pt", label: "Português" },
 ];
 
 export const QUICK_REPLIES = {
@@ -50,6 +51,7 @@ export const QUICK_REPLIES = {
   es: ["Baño más cercano", "Espera en la puerta", "Próximo autobús", "Ruta accesible"],
   fr: ["Toilettes proches", "Attente à la porte", "Prochaine navette", "Accès handicapé"],
   hi: ["नज़दीकी शौचालय", "गेट पर प्रतीक्षा", "अगली शटल", "व्हीलचेयर मार्ग"],
+  pt: ["Banheiro mais próximo", "Espera no portão", "Próximo ônibus", "Rota acessível"],
 };
 
 export const GREETING = {
@@ -57,6 +59,7 @@ export const GREETING = {
   es: "¡Hola! Soy tu asistente StadiumAI. Pregúntame sobre puertas, baños, transporte o accesibilidad.",
   fr: "Bonjour ! Je suis votre assistant StadiumAI. Posez-moi des questions sur les portes, toilettes, transport.",
   hi: "नमस्ते! मैं आपका StadiumAI सहायक हूं। गेट, शौचालय, परिवहन या सुगम्यता के बारे में पूछें।",
+  pt: "Olá! Sou o seu assistente StadiumAI. Pergunte-me sobre portões, banheiros, transporte ou acessibilidade.",
 };
 
 export const HOST_CITIES = [

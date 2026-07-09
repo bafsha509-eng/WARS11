@@ -49,7 +49,7 @@ export function validateLogin(email, password) {
 
 /**
  * Maps fan concierge chatbot queries to context-rich GenAI predictions.
- * Supports multilingual routes for English, Spanish, French, and Hindi.
+ * Supports multilingual routes for English, Spanish, French, Hindi, and Portuguese.
  * @param {string} msg 
  * @param {string} lang 
  * @returns {string}
@@ -85,12 +85,19 @@ export function matchReply(msg, lang) {
       wheelchair: "🤖 **GenAI - व्हीलचेयर मार्ग**: सुगम्य मार्ग सक्रिय: गेट B पर रैंप, आपके सेक्शन तक लिफ्ट उपलब्ध है, कोई सीढ़ियां नहीं।",
       default: "🤖 **StadiumAI सहायक**: मैं गेट वेटिंग, शटल समय और सुगम्य मार्ग की जानकारी दे सकता हूं। नीचे दिए गए विकल्प चुनें।",
     },
+    pt: {
+      restroom: "🤖 **GenAI - Recomendação de Banheiro**: Com base nos sensores de ocupação ao vivo, os banheiros atrás da Seção 112 têm uma espera de 3 minutos. No entanto, os banheiros da Seção 114 estão vazios (0 min de espera). Rota acessível desobstruída.",
+      gate: "🤖 **GenAI - Roteamento Preditivo de Multidões**: O Portão C está operando com 88% de capacidade (15 min de espera). Recomendo ir para o Portão D (35% de capacidade, menos de 2 min de espera). O ônibus do Estacionamento 4 parte em 6 min para ajudar.",
+      shuttle: "🤖 **GenAI - Estimativa de Transporte**: O próximo ônibus para o Centro de Transporte sai em 12 min do Estacionamento 4. A frequência dos ônibus será ajustada para cada 6 min para gerenciar o fluxo de saída.",
+      wheelchair: "🤖 **GenAI - Rota de Acessibilidade**: Rota acessível ativa. Acesso direto por rampa no Portão B, elevador para o nível superior. Estações de recarga de água ficam a 15m da saída do elevador.",
+      default: "🤖 **StadiumAI Concierge**: Posso orientá-lo sobre a capacidade dos portões, horários de transporte, rotas acessíveis e sustentabilidade. Toque em uma resposta rápida ou faça uma nova pergunta.",
+    },
   };
   const dict = R[lang] || R.en;
-  if (m.includes("restroom") || m.includes("baño") || m.includes("toilette") || m.includes("शौचालय")) return dict.restroom;
-  if (m.includes("gate") || m.includes("puerta") || m.includes("porte") || m.includes("गेट")) return dict.gate;
-  if (m.includes("shuttle") || m.includes("autobús") || m.includes("navette") || m.includes("शटल")) return dict.shuttle;
-  if (m.includes("wheelchair") || m.includes("accesible") || m.includes("handicap") || m.includes("व्हीलचेयर")) return dict.wheelchair;
+  if (m.includes("restroom") || m.includes("baño") || m.includes("toilette") || m.includes("शौचालय") || m.includes("banheiro")) return dict.restroom;
+  if (m.includes("gate") || m.includes("puerta") || m.includes("porte") || m.includes("गेट") || m.includes("portão")) return dict.gate;
+  if (m.includes("shuttle") || m.includes("autobús") || m.includes("navette") || m.includes("शटल") || m.includes("ônibus")) return dict.shuttle;
+  if (m.includes("wheelchair") || m.includes("accesible") || m.includes("handicap") || m.includes("व्हीलचेयर") || m.includes("acessível") || m.includes("acessivel")) return dict.wheelchair;
   return dict.default;
 }
 
@@ -121,4 +128,60 @@ export function calculateCo2Savings(transitType, distance) {
     return Math.round(normDist * 0.082 * 10) / 10;
   }
   return Math.round(normDist * 0.112 * 10) / 10;
+}
+
+/**
+ * Finds the gate with the highest crowd density.
+ * @param {Record<string, number>} densities 
+ * @returns {[string, number] | undefined} The gate entry [id, density] or undefined
+ */
+export function getBusiestGate(densities) {
+  if (!densities || typeof densities !== 'object') return undefined;
+  const entries = Object.entries(densities);
+  if (entries.length === 0) return undefined;
+  return entries.sort((a, b) => b[1] - a[1])[0];
+}
+
+/**
+ * Finds the gate with the lowest crowd density.
+ * @param {Record<string, number>} densities 
+ * @returns {[string, number] | undefined} The gate entry [id, density] or undefined
+ */
+export function getQuietestGate(densities) {
+  if (!densities || typeof densities !== 'object') return undefined;
+  const entries = Object.entries(densities);
+  if (entries.length === 0) return undefined;
+  return entries.sort((a, b) => a[1] - b[1])[0];
+}
+
+/**
+ * Standardizes or overrides the user role based on session attributes.
+ * Maps 'staff' -> 'volunteer', defaulting to 'fan' if no session is active.
+ * @param {{email?: string, role?: string} | null} session 
+ * @returns {string} Target role
+ */
+export function resolveUserRole(session) {
+  if (!session) return "fan";
+  const r = session.role;
+  if (r === "staff") return "volunteer";
+  return r || "fan";
+}
+
+/**
+ * Converts polar coordinates on the stadium bowl map to SVG viewport Cartesian coordinates.
+ * @param {number} angle 
+ * @param {number} radius 
+ * @param {number} centerX 
+ * @param {number} centerY 
+ * @returns {{x: number, y: number}}
+ */
+export function calculateGateCoordinates(angle, radius, centerX = 200, centerY = 200) {
+  if (typeof angle !== 'number' || typeof radius !== 'number') {
+    return { x: centerX, y: centerY };
+  }
+  const rad = (angle * Math.PI) / 180;
+  return {
+    x: Math.round((centerX + radius * Math.cos(rad)) * 100) / 100,
+    y: Math.round((centerY + radius * Math.sin(rad)) * 100) / 100
+  };
 }

@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState, lazy, Suspense, useCallback } from "react";
 
 // Lazy load components to optimize bundle size, initial load speed, and overall performance efficiency.
 const HackathonLanding = lazy(() => import("./components/HackathonLanding"));
@@ -9,21 +9,21 @@ export default function App() {
   const [view, setView] = useState("landing"); // 'landing' | 'login' | 'dashboard'
   const [session, setSession] = useState(null);
 
-  const handleLoginSuccess = (userSession) => {
+  const handleLoginSuccess = useCallback((userSession) => {
     setSession(userSession);
     setView("dashboard");
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setSession(null);
     setView("landing");
-  };
+  }, []);
 
   // Direct launch for demo shortcut (triggers default login with Fan role)
-  const handleDirectLaunch = () => {
+  const handleDirectLaunch = useCallback(() => {
     setSession({ email: "guest@fifa.com", role: "fan" });
     setView("dashboard");
-  };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
