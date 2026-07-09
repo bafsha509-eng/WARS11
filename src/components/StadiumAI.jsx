@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { sanitizeInput, matchReply } from "../utils/helpers";
 import {
   MessageCircle, X, Send, Globe2, MapPin, Users, Bus, Leaf,
   AlertTriangle, CheckCircle2, Clock, ShieldAlert, Accessibility,
@@ -88,45 +89,7 @@ const GREETING = {
   hi: "नमस्ते! मैं आपका StadiumAI सहायक हूं। गेट, शौचालय, परिवहन या सुगम्यता के बारे में पूछें।",
 };
 
-function matchReply(msg, lang) {
-  const m = msg.toLowerCase();
-  const R = {
-    en: {
-      restroom: "Nearest restroom is 40m from your seat, behind Section 112 — wait time: under 3 min.",
-      gate: "Gate C is at 88% capacity right now. Gate D is quieter (35%) if you're flexible on entry point.",
-      shuttle: "Next shuttle to Downtown Transit Hub departs in 12 minutes from Lot 4.",
-      wheelchair: "Accessible route enabled: ramp access via Gate B, elevator to your section, no stairs.",
-      default: "Here's what I found — for anything more specific, tap a quick-reply below or ask again.",
-    },
-    es: {
-      restroom: "El baño más cercano está a 40m de tu asiento, detrás de la Sección 112 — espera: menos de 3 min.",
-      gate: "La Puerta C está al 88% de capacidad. La Puerta D está más tranquila (35%).",
-      shuttle: "El próximo autobús al centro sale en 12 minutos desde el Lote 4.",
-      wheelchair: "Ruta accesible activada: rampa en la Puerta B, ascensor hasta tu sección, sin escaleras.",
-      default: "Esto es lo que encontré — para algo más específico, toca una respuesta rápida.",
-    },
-    fr: {
-      restroom: "Les toilettes les plus proches sont à 40m, derrière la Section 112 — attente: moins de 3 min.",
-      gate: "La Porte C est à 88% de capacité. La Porte D est plus calme (35%).",
-      shuttle: "La prochaine navette part dans 12 minutes du Parking 4.",
-      wheelchair: "Itinéraire accessible activé : rampe à la Porte B, ascenseur jusqu'à votre section.",
-      default: "Voici ce que j'ai trouvé — pour plus de précision, touchez une réponse rapide.",
-    },
-    hi: {
-      restroom: "नज़दीकी शौचालय आपकी सीट से 40 मीटर दूर, सेक्शन 112 के पीछे है — प्रतीक्षा 3 मिनट से कम।",
-      gate: "गेट C अभी 88% क्षमता पर है। गेट D शांत है (35%)।",
-      shuttle: "अगली शटल 12 मिनट में लॉट 4 से रवाना होगी।",
-      wheelchair: "सुगम्य मार्ग सक्रिय: गेट B पर रैंप, आपके सेक्शन तक लिफ्ट, कोई सीढ़ियां नहीं।",
-      default: "मुझे यह मिला — अधिक विशिष्ट जानकारी के लिए नीचे टैप करें।",
-    },
-  };
-  const dict = R[lang] || R.en;
-  if (m.includes("restroom") || m.includes("baño") || m.includes("toilette") || m.includes("शौचालय")) return dict.restroom;
-  if (m.includes("gate") || m.includes("puerta") || m.includes("porte") || m.includes("गेट")) return dict.gate;
-  if (m.includes("shuttle") || m.includes("autobús") || m.includes("navette") || m.includes("शटल")) return dict.shuttle;
-  if (m.includes("wheelchair") || m.includes("accesible") || m.includes("handicap") || m.includes("व्हीलचेयर")) return dict.wheelchair;
-  return dict.default;
-}
+
 
 /* =========================================================
    CHAT WIDGET
@@ -147,12 +110,8 @@ function ChatWidget() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, typing, open]);
 
-  function sanitize(str) {
-    return str.replace(/[<>]/g, "").trim();
-  }
-
   function send(text) {
-    const clean = sanitize(text);
+    const clean = sanitizeInput(text);
     if (!clean) return;
     setMessages((prev) => [...prev, { from: "user", text: clean }]);
     setInput("");
@@ -403,6 +362,46 @@ function FanView({ densities, highContrast, setHighContrast }) {
    ORGANIZER VIEW
 ========================================================= */
 function OrganizerView() {
+  const [decisions, setDecisions] = useState([
+    {
+      id: 1,
+      title: "Redirect North Concourse Overflow",
+      details: "GenAI analysis recommends routing incoming Gate C (88% busy) traffic to Gate D (35% busy). Expected queue time decrease: 12 minutes.",
+      status: "Ready",
+      type: "Crowd Control",
+      color: "text-amber-400 bg-amber-500/10 border-amber-500/20"
+    },
+    {
+      id: 2,
+      title: "Pre-empt Post-Match Shuttle Frequencies",
+      details: "Exit surges predicted to trigger 12 min early. Increase Lot 4 transit line frequencies to 4-minute intervals.",
+      status: "Dispatched",
+      type: "Transport",
+      color: "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20"
+    },
+    {
+      id: 3,
+      title: "Shift Accessibility Marshals to Gate B",
+      details: "Gate B wheelchair entries have increased by 40%. Dispatch 3 floating marshals from the North concourse to assist.",
+      status: "Ready",
+      type: "Accessibility",
+      color: "text-amber-400 bg-amber-500/10 border-amber-500/20"
+    }
+  ]);
+
+  const handleDispatch = (id) => {
+    setDecisions(prev => prev.map(d => {
+      if (d.id === id) {
+        return {
+          ...d,
+          status: "Dispatched",
+          color: "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20"
+        };
+      }
+      return d;
+    }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Overview stats grid */}
@@ -413,7 +412,7 @@ function OrganizerView() {
           { label: "Open incidents", value: "3", icon: AlertTriangle, color: "text-[#E2583E]" },
           { label: "Avg. gate wait", value: "4.2 min", icon: Clock, color: "text-purple-400" },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
+          <div key={s.label} className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 shadow-sm">
             <s.icon size={18} className={s.color} />
             <p className="text-2xl font-black mt-2 text-white font-heading">{s.value}</p>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-1">{s.label}</p>
@@ -421,66 +420,118 @@ function OrganizerView() {
         ))}
       </div>
 
-      {/* Analytics Charts Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
-          <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-            <Trophy size={16} className="text-emerald-400" /> Entry rate over time
-          </h4>
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
-              <LineChart data={ENTRY_DATA}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="t" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }} />
-                <Line type="monotone" dataKey="fans" stroke="#2E7D5B" strokeWidth={3} dot={{ r: 3, fill: '#4FA97C' }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
-          <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-            <Shield size={16} className="text-[#F2B84C]" /> Gate-wise capacity
-          </h4>
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
-              <BarChart data={GATE_BAR}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }} />
-                <Bar dataKey="capacity" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Incident Log */}
-      <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
-        <h4 className="font-bold text-white mb-3.5 flex items-center gap-2">
-          <ShieldAlert size={18} className="text-[#E2583E]" /> AI-flagged Grid Incidents
-        </h4>
-        <div className="space-y-3">
-          {INCIDENTS.map((inc) => (
-            <div key={inc.id} className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-950/60 border border-slate-850/50">
-              <span
-                className="text-[9px] font-bold px-2 py-1 rounded-full shrink-0 mt-0.5"
-                style={{
-                  background: inc.sev === "high" ? COLORS.coral : inc.sev === "med" ? COLORS.gold : COLORS.green,
-                  color: inc.sev === "med" ? COLORS.navyDeep : "white",
-                }}
-              >
-                {inc.type.toUpperCase()}
-              </span>
-              <div>
-                <p className="text-xs font-bold text-white">{inc.loc}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{inc.ai}</p>
+      <div className="grid lg:grid-cols-12 gap-6 items-start">
+        {/* Charts & Log Section */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Analytics Charts Grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <Trophy size={16} className="text-[#F2B84C]" /> Entry rate over time
+              </h4>
+              <div style={{ width: "100%", height: 220 }}>
+                <ResponsiveContainer>
+                  <LineChart data={ENTRY_DATA}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="t" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }} />
+                    <Line type="monotone" dataKey="fans" stroke="#2E7D5B" strokeWidth={3} dot={{ r: 3, fill: '#4FA97C' }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          ))}
+
+            <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <Shield size={16} className="text-emerald-400" /> Gate-wise capacity
+              </h4>
+              <div style={{ width: "100%", height: 220 }}>
+                <ResponsiveContainer>
+                  <BarChart data={GATE_BAR}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#334155" />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }} />
+                    <Bar dataKey="capacity" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Incident Log */}
+          <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60">
+            <h4 className="font-bold text-white mb-3.5 flex items-center gap-2">
+              <ShieldAlert size={18} className="text-[#E2583E]" /> AI-flagged Grid Incidents
+            </h4>
+            <div className="space-y-3">
+              {INCIDENTS.map((inc) => (
+                <div key={inc.id} className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-950/60 border border-slate-850/50">
+                  <span
+                    className="text-[9px] font-bold px-2 py-1 rounded-full shrink-0 mt-0.5"
+                    style={{
+                      background: inc.sev === "high" ? COLORS.coral : inc.sev === "med" ? COLORS.gold : COLORS.green,
+                      color: inc.sev === "med" ? COLORS.navyDeep : "white",
+                    }}
+                  >
+                    {inc.type.toUpperCase()}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">{inc.loc}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{inc.ai}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* GenAI Predictive Decision Support Sidebar */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+              <Sparkles size={18} className="text-[#F2B84C] animate-pulse" />
+              <div>
+                <h4 className="font-bold text-white text-sm font-heading">GenAI Decision Support</h4>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Predictive Venue Controls</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {decisions.map((d) => (
+                <div key={d.id} className="p-4 rounded-xl bg-slate-950/50 border border-slate-850 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                        {d.type}
+                      </span>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${d.color}`}>
+                        {d.status}
+                      </span>
+                    </div>
+                    <h5 className="text-xs font-bold text-white">{d.title}</h5>
+                    <p className="text-[10px] leading-relaxed text-slate-400 font-medium">
+                      {d.details}
+                    </p>
+                  </div>
+
+                  {d.status === "Ready" ? (
+                    <button
+                      onClick={() => handleDispatch(d.id)}
+                      className="w-full py-2 bg-[#F2B84C] hover:bg-[#C99328] text-slate-950 font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-md shadow-[#F2B84C]/5 hover:scale-[1.01]"
+                    >
+                      Approve &amp; Dispatch
+                    </button>
+                  ) : (
+                    <div className="w-full py-2 bg-emerald-600/10 border border-emerald-500/20 text-[#4FA97C] font-extrabold text-[10px] uppercase tracking-wider rounded-lg text-center select-none font-semibold">
+                      Dispatched ✓
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

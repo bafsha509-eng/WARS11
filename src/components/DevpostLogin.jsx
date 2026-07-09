@@ -1,38 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, CheckSquare, Square, Sparkles, MapPin, ArrowLeft } from "lucide-react";
-
-function sanitizeInput(text) {
-  if (typeof text !== 'string') return '';
-  return text.replace(/[<>]/g, '').trim();
-}
-
-function validateLogin(email, password) {
-  const errors = {};
-  const cleanEmail = sanitizeInput(email);
-  const cleanPassword = password || '';
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!cleanEmail) {
-    errors.email = "Email/Username is required.";
-  } else if (!cleanEmail.includes('@')) {
-    if (cleanEmail.length < 3) {
-      errors.email = "Username must be at least 3 characters.";
-    }
-  } else if (!emailRegex.test(cleanEmail)) {
-    errors.email = "Please enter a valid email address.";
-  }
-
-  if (!cleanPassword) {
-    errors.password = "Password is required.";
-  } else if (cleanPassword.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
-  }
-
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors
-  };
-}
+import { sanitizeInput, validateLogin } from "../utils/helpers";
 
 export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
   const [email, setEmail] = useState("");
