@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeInput, validateLogin, matchReply } from "./helpers";
+import { sanitizeInput, validateLogin, matchReply, getGateTrafficLevel, calculateCo2Savings } from "./helpers";
 
 describe("sanitizeInput utility", () => {
   it("should strip HTML angle brackets", () => {
@@ -82,5 +82,46 @@ describe("matchReply multilingual chatbot routing", () => {
   it("should fallback to a default prompt response", () => {
     const reply = matchReply("unknown query details", "en");
     expect(reply).toContain("StadiumAI Concierge");
+  });
+});
+
+describe("getGateTrafficLevel helper classification", () => {
+  it("should return clear for capacity under or equal to 45", () => {
+    expect(getGateTrafficLevel(30)).toBe("clear");
+    expect(getGateTrafficLevel(45)).toBe("clear");
+  });
+
+  it("should return moderate for capacity between 45 and 70", () => {
+    expect(getGateTrafficLevel(50)).toBe("moderate");
+    expect(getGateTrafficLevel(70)).toBe("moderate");
+  });
+
+  it("should return busy for capacity over 70", () => {
+    expect(getGateTrafficLevel(75)).toBe("busy");
+    expect(getGateTrafficLevel(95)).toBe("busy");
+  });
+
+  it("should handle invalid inputs gracefully by returning clear", () => {
+    expect(getGateTrafficLevel(null)).toBe("clear");
+    expect(getGateTrafficLevel("invalid")).toBe("clear");
+  });
+});
+
+describe("calculateCo2Savings environmental calculator", () => {
+  it("should calculate correct savings for metro", () => {
+    expect(calculateCo2Savings("metro", 10)).toBe(1.4);
+  });
+
+  it("should calculate correct savings for shuttle", () => {
+    expect(calculateCo2Savings("shuttle", 10)).toBe(0.8);
+  });
+
+  it("should calculate correct savings for default multi-modal", () => {
+    expect(calculateCo2Savings("other", 10)).toBe(1.1);
+  });
+
+  it("should handle invalid distances gracefully", () => {
+    expect(calculateCo2Savings("metro", -5)).toBe(0);
+    expect(calculateCo2Savings("metro", null)).toBe(0);
   });
 });

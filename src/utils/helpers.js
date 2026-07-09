@@ -93,3 +93,32 @@ export function matchReply(msg, lang) {
   if (m.includes("wheelchair") || m.includes("accesible") || m.includes("handicap") || m.includes("व्हीलचेयर")) return dict.wheelchair;
   return dict.default;
 }
+
+/**
+ * Classifies gate traffic levels based on capacity metrics.
+ * @param {number} capacity 
+ * @returns {string}
+ */
+export function getGateTrafficLevel(capacity) {
+  if (typeof capacity !== 'number') return 'clear';
+  if (capacity > 70) return 'busy';
+  if (capacity > 45) return 'moderate';
+  return 'clear';
+}
+
+/**
+ * Calculates carbon savings based on transit modes vs driving.
+ * @param {string} transitType 
+ * @param {number} distance 
+ * @returns {number} Saved CO2 in kg
+ */
+export function calculateCo2Savings(transitType, distance) {
+  const normDist = Math.max(0, Number(distance) || 0);
+  if (transitType === 'metro') {
+    return Math.round(normDist * 0.143 * 10) / 10;
+  }
+  if (transitType === 'shuttle') {
+    return Math.round(normDist * 0.082 * 10) / 10;
+  }
+  return Math.round(normDist * 0.112 * 10) / 10;
+}

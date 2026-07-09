@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, CheckSquare, Square, Sparkles, MapPin, ArrowLeft } from "lucide-react";
 import { sanitizeInput, validateLogin } from "../utils/helpers";
+import { HOST_CITIES } from "../utils/constants";
 
 export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
   const [email, setEmail] = useState("");
@@ -23,11 +24,6 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
   const [oauthPassword, setOauthPassword] = useState("");
   const [showOauthPassword, setShowOauthPassword] = useState(false);
   const [oauthError, setOauthError] = useState("");
-
-  const hostCities = [
-    "Los Angeles", "Mexico City", "New York/New Jersey", "Toronto", 
-    "Miami", "Dallas", "Vancouver", "Guadalajara", "Atlanta"
-  ];
 
   const [particles, setParticles] = useState([]);
   useEffect(() => {
@@ -178,9 +174,9 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
             <MapPin size={10} /> Active Host City Grids Configured
           </p>
           <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400">
-            {hostCities.map((c, i) => (
+            {HOST_CITIES.map((c, i) => (
               <span key={c} className="font-semibold">
-                {c}{i < hostCities.length - 1 ? " ·" : ""}
+                {c}{i < HOST_CITIES.length - 1 ? " ·" : ""}
               </span>
             ))}
           </div>
