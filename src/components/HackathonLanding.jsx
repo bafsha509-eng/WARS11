@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Search, ArrowRight, Award, Trophy, Users, Shield, Compass, ChevronRight } from "lucide-react";
+import { Sparkles, ArrowRight, Award, Trophy, Users, Shield, Compass } from "lucide-react";
 
 export default function HackathonLanding({ onNavigateToLogin, onNavigateToDashboardDirectly }) {
   const sponsors = [

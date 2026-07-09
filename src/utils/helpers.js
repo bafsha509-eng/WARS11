@@ -10,7 +10,7 @@
  */
 export function sanitizeInput(text) {
   if (typeof text !== 'string') return '';
-  return text.replace(/[<>]/g, '').trim();
+  return text.replace(/[<>'"`\-;*=]/g, '').trim();
 }
 
 /**

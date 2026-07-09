@@ -16,6 +16,10 @@ describe("sanitizeInput utility", () => {
     expect(sanitizeInput(undefined)).toBe("");
     expect(sanitizeInput(123)).toBe("");
   });
+
+  it("should strip SQL and XSS injection characters", () => {
+    expect(sanitizeInput("admin' OR 1=1--")).toBe("admin OR 11");
+  });
 });
 
 describe("validateLogin credentials scheme", () => {

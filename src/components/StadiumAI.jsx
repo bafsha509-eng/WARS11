@@ -4,9 +4,9 @@ import {
   GATES, ENTRY_DATA, GATE_BAR, INCIDENTS, TASKS, LANGUAGES, QUICK_REPLIES, GREETING
 } from "../utils/constants";
 import {
-  MessageCircle, X, Send, Globe2, MapPin, Users, Bus, Leaf,
-  AlertTriangle, CheckCircle2, Clock, ShieldAlert, Accessibility,
-  Navigation, TrendingUp, Radio, ChevronRight, Sparkles, Menu, Shield, Trophy
+  MessageCircle, X, Send, Globe2, Users, Bus, Leaf,
+  AlertTriangle, Clock, ShieldAlert, Accessibility,
+  Navigation, TrendingUp, Radio, Sparkles, Menu, Shield, Trophy
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
