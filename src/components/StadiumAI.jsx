@@ -312,57 +312,65 @@ const FanView = React.memo(function FanView({ densities, highContrast, setHighCo
 /* =========================================================
    ORGANIZER VIEW
 ========================================================= */
-const OrganizerView = React.memo(function OrganizerView({ incidents }) {
-  const [decisions, setDecisions] = useState([
-    {
-      id: 1,
-      title: "Redirect North Concourse Overflow",
-      details: "GenAI analysis recommends routing incoming Gate C (88% busy) traffic to Gate D (35% busy). Expected queue time decrease: 12 minutes.",
-      status: "Ready",
-      type: "Crowd Control",
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/20"
-    },
-    {
-      id: 2,
-      title: "Pre-empt Post-Match Shuttle Frequencies",
-      details: "Exit surges predicted to trigger 12 min early. Increase Lot 4 transit line frequencies to 4-minute intervals.",
-      status: "Dispatched",
-      type: "Transport",
-      color: "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20"
-    },
-    {
-      id: 3,
-      title: "Shift Accessibility Marshals to Gate B",
-      details: "Gate B wheelchair entries have increased by 40%. Dispatch 3 floating marshals from the North concourse to assist.",
-      status: "Ready",
-      type: "Accessibility",
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/20"
-    }
-  ]);
+const OrganizerView = React.memo(function OrganizerView({ incidents, densities, ticker }) {
+  const [dispatchedIds, setDispatchedIds] = useState([2]);
 
   const handleDispatch = useCallback((id) => {
-    setDecisions(prev => prev.map(d => {
-      if (d.id === id) {
-        return {
-          ...d,
-          status: "Dispatched",
-          color: "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20"
-        };
-      }
-      return d;
-    }));
+    setDispatchedIds(prev => [...prev, id]);
   }, []);
+
+  const busiest = useMemo(() => getBusiestGate(densities) || ["C", 88], [densities]);
+  const quietest = useMemo(() => getQuietestGate(densities) || ["D", 35], [densities]);
+
+  const avgDensity = useMemo(() => {
+    const vals = Object.values(densities || {});
+    if (vals.length === 0) return 71;
+    return Math.round(vals.reduce((acc, v) => acc + v, 0) / vals.length);
+  }, [densities]);
+
+  const stats = useMemo(() => {
+    return [
+      { label: "Fans in venue", value: (ticker || 38900).toLocaleString(), icon: Users, color: "text-[#F2B84C]" },
+      { label: "Capacity used", value: `${avgDensity}%`, icon: TrendingUp, color: "text-[#4FA97C]" },
+      { label: "Open incidents", value: (incidents || []).length.toString(), icon: AlertTriangle, color: "text-[#E2583E]" },
+      { label: "Avg. gate wait", value: `${(avgDensity * 0.08 + 1).toFixed(1)} min`, icon: Clock, color: "text-purple-400" },
+    ];
+  }, [ticker, avgDensity, incidents]);
+
+  const decisions = useMemo(() => {
+    return [
+      {
+        id: 1,
+        title: "Redirect North Concourse Overflow",
+        details: `GenAI analysis recommends routing incoming Gate ${busiest[0]} (${Math.round(busiest[1])}% busy) traffic to Gate ${quietest[0]} (${Math.round(quietest[1])}% busy). Expected queue time decrease: 12 minutes.`,
+        status: dispatchedIds.includes(1) ? "Dispatched" : "Ready",
+        type: "Crowd Control",
+        color: dispatchedIds.includes(1) ? "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20" : "text-amber-400 bg-amber-500/10 border-amber-500/20"
+      },
+      {
+        id: 2,
+        title: "Pre-empt Post-Match Shuttle Frequencies",
+        details: "Exit surges predicted to trigger 12 min early. Increase Lot 4 transit line frequencies to 4-minute intervals.",
+        status: dispatchedIds.includes(2) ? "Dispatched" : "Ready",
+        type: "Transport",
+        color: dispatchedIds.includes(2) ? "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20" : "text-amber-400 bg-amber-500/10 border-amber-500/20"
+      },
+      {
+        id: 3,
+        title: "Shift Accessibility Marshals to Gate B",
+        details: `Gate B wheelchair entries have increased. Dispatch 3 accessibility marshals to assist at Gate ${quietest[0]} to balance assistance capacity.`,
+        status: dispatchedIds.includes(3) ? "Dispatched" : "Ready",
+        type: "Accessibility",
+        color: dispatchedIds.includes(3) ? "text-[#4FA97C] bg-emerald-500/10 border-emerald-500/20" : "text-amber-400 bg-amber-500/10 border-amber-500/20"
+      }
+    ];
+  }, [busiest, quietest, dispatchedIds]);
 
   return (
     <div className="space-y-6">
       {/* Overview stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Fans in venue", value: "38,900", icon: Users, color: "text-[#F2B84C]" },
-          { label: "Capacity used", value: "71%", icon: TrendingUp, color: "text-[#4FA97C]" },
-          { label: "Open incidents", value: "3", icon: AlertTriangle, color: "text-[#E2583E]" },
-          { label: "Avg. gate wait", value: "4.2 min", icon: Clock, color: "text-purple-400" },
-        ].map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 shadow-sm">
             <s.icon size={18} className={s.color} />
             <p className="text-2xl font-black mt-2 text-white font-heading">{s.value}</p>
@@ -860,7 +868,7 @@ export default function StadiumAI({ session, onLogout }) {
         {/* Main Dashboard Views */}
         <main className="pb-12">
           {role === "fan" && <FanView densities={densities} highContrast={highContrast} setHighContrast={setHighContrast} />}
-          {role === "organizer" && <OrganizerView incidents={incidents} />}
+          {role === "organizer" && <OrganizerView incidents={incidents} densities={densities} ticker={ticker} />}
           {role === "volunteer" && <VolunteerView tasks={tasks} onMoveTask={handleMoveTask} />}
         </main>
       </div>
