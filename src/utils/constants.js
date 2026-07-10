@@ -1,3 +1,16 @@
+export const COLORS = {
+  navy: "#0F1E33",
+  navyDeep: "#0A1524",
+  gold: "#F2B84C",
+  goldDeep: "#C99328",
+  green: "#2E7D5B",
+  greenLight: "#4FA97C",
+  coral: "#E2583E",
+  chalk: "#F5F3EC",
+  ink: "#12202F",
+  slate: "#94A3B8",
+};
+
 export const GATES = [
   { id: "A", label: "Gate A · North", angle: -90, base: 62 },
   { id: "B", label: "Gate B · Northeast", angle: -30, base: 41 },

@@ -139,6 +139,17 @@ describe("matchReply multilingual chatbot routing", () => {
     expect(reply).toContain("Gate B is running at 90%");
     expect(reply).toContain("Gate A (10%");
   });
+
+  it("should resolve sustainability, food, lost & found, and medical queries correctly", () => {
+    expect(matchReply("What is your sustainability index?", "en")).toContain("Sustainability Advisor");
+    expect(matchReply("Tell me about green initiatives", "es")).toContain("Asesor de Sostenibilidad");
+    expect(matchReply("Where can I find sustainable food options?", "en")).toContain("Sustainable Dining");
+    expect(matchReply("Je veux manger végétarien", "fr")).toContain("Restauration Durable");
+    expect(matchReply("I lost my keys", "en")).toContain("Lost & Found Tracker");
+    expect(matchReply("perdi meu celular", "pt")).toContain("Achados e Perdidos");
+    expect(matchReply("I need medical help", "en")).toContain("Medical Support");
+    expect(matchReply("secours médical", "fr")).toContain("Assistance Médicale");
+  });
 });
 
 describe("getGateTrafficLevel helper classification", () => {
