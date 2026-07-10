@@ -25,6 +25,24 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
   const [showOauthPassword, setShowOauthPassword] = useState(false);
   const [oauthError, setOauthError] = useState("");
 
+  const [viewMode, setViewMode] = useState("login"); // 'login' | 'register' | 'forgot'
+  
+  // Forgot Password state
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isForgotEmailFocused, setIsForgotEmailFocused] = useState(false);
+  const [forgotSubmitted, setForgotSubmitted] = useState(false);
+
+  // Register state
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [isRegisterEmailFocused, setIsRegisterEmailFocused] = useState(false);
+  const [isRegisterPasswordFocused, setIsRegisterPasswordFocused] = useState(false);
+  const [isRegisterConfirmFocused, setIsRegisterConfirmFocused] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
+  const [registerErrors, setRegisterErrors] = useState({});
+
   const [particles, setParticles] = useState([]);
   useEffect(() => {
     const list = Array.from({ length: 12 }).map((_, i) => ({
@@ -54,6 +72,64 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
       setIsLoading(false);
       setIsValidated(true);
       onLoginSuccess({ email: sanitizeInput(email), role: selectedRole });
+    }, 1200);
+  };
+
+  const handleForgotSubmit = (e) => {
+    e.preventDefault();
+    setErrors({});
+    const cleanEmail = sanitizeInput(forgotEmail);
+    if (!cleanEmail) {
+      setErrors({ forgotEmail: "Email address is required." });
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrors({ forgotEmail: "Please enter a valid email address." });
+      return;
+    }
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setForgotSubmitted(true);
+    }, 1000);
+  };
+
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    setRegisterErrors({});
+    
+    const cleanEmail = sanitizeInput(registerEmail);
+    const errorsMap = {};
+    if (!cleanEmail) {
+      errorsMap.email = "Email address is required.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        errorsMap.email = "Please enter a valid email address.";
+      }
+    }
+    
+    if (!registerPassword) {
+      errorsMap.password = "Password is required.";
+    } else if (registerPassword.length < 6) {
+      errorsMap.password = "Password must be at least 6 characters.";
+    }
+    
+    if (registerPassword !== registerConfirmPassword) {
+      errorsMap.confirmPassword = "Passwords do not match.";
+    }
+    
+    if (Object.keys(errorsMap).length > 0) {
+      setRegisterErrors(errorsMap);
+      return;
+    }
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      onLoginSuccess({ email: cleanEmail, role: selectedRole });
     }, 1200);
   };
 
@@ -186,198 +262,476 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
       {/* RIGHT FORM CONTAINER (Devpost-Style Layout) */}
       <div className="w-full md:w-1/2 flex flex-col justify-between p-6 md:p-12 bg-slate-950">
         <div className="mb-6 md:my-auto max-w-md w-full mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-heading">
-              Log in to StadiumAI
-            </h1>
-            <p className="text-xs text-slate-400 mt-1.5">
-              Select your matchday profile to dynamically route to your custom dashboard tools.
-            </p>
-          </div>
+          {viewMode === "login" && (
+            <>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-heading">
+                  Log in to StadiumAI
+                </h1>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  Select your matchday profile to dynamically route to your custom dashboard tools.
+                </p>
+              </div>
 
-          {/* Access Level Selector */}
-          <div className="space-y-2">
-            <span className="block text-[10px] font-bold tracking-wider uppercase text-slate-500">
-              Select Your Access Level
-            </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Access Role Selector">
-              {[
-                { id: "fan", label: "Fan", desc: "Wayfinding & chat" },
-                { id: "organizer", label: "Organizer", desc: "Ops intelligence" },
-                { id: "volunteer", label: "Volunteer", desc: "Assignments" },
-                { id: "staff", label: "Staff", desc: "Venue alerts" },
-              ].map((role) => {
-                const isSelected = selectedRole === role.id;
-                return (
-                  <button
-                    key={role.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => setSelectedRole(role.id)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-[#F2B84C] ${
-                      isSelected 
-                        ? roleStyles[role.id] 
-                        : "border-slate-800 bg-[#0F1E33]/40 text-slate-400 hover:bg-[#0F1E33]/70 hover:text-slate-200"
+              {/* Access Level Selector */}
+              <div className="space-y-2">
+                <span className="block text-[10px] font-bold tracking-wider uppercase text-slate-500">
+                  Select Your Access Level
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Access Role Selector">
+                  {[
+                    { id: "fan", label: "Fan", desc: "Wayfinding & chat" },
+                    { id: "organizer", label: "Organizer", desc: "Ops intelligence" },
+                    { id: "volunteer", label: "Volunteer", desc: "Assignments" },
+                    { id: "staff", label: "Staff", desc: "Venue alerts" },
+                  ].map((role) => {
+                    const isSelected = selectedRole === role.id;
+                    return (
+                      <button
+                        key={role.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setSelectedRole(role.id)}
+                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-[#F2B84C] ${
+                          isSelected 
+                            ? roleStyles[role.id] 
+                            : "border-slate-800 bg-[#0F1E33]/40 text-slate-400 hover:bg-[#0F1E33]/70 hover:text-slate-200"
+                        }`}
+                      >
+                        <span className="font-bold text-xs">{role.label}</span>
+                        <span className="text-[8px] mt-0.5 opacity-70 leading-none">{role.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Login Form */}
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="space-y-1">
+                  <label htmlFor="email-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Email Address or Username
+                  </label>
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                      errors.email 
+                        ? "border-rose-500 ring-1 ring-rose-500" 
+                        : isEmailFocused 
+                          ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                          : "border-slate-800"
                     }`}
                   >
-                    <span className="font-bold text-xs">{role.label}</span>
-                    <span className="text-[8px] mt-0.5 opacity-70 leading-none">{role.desc}</span>
+                    <Mail size={16} className={errors.email ? "text-rose-500" : "text-slate-500"} />
+                    <input
+                      id="email-input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setIsEmailFocused(true)}
+                      onBlur={() => setIsEmailFocused(false)}
+                      placeholder="e.g. fan@fifa2026.com"
+                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                      aria-required="true"
+                      aria-invalid={errors.email ? "true" : "false"}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-pulse" role="alert">
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="password-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("forgot")}
+                      className="text-[10px] font-bold text-[#F2B84C] hover:underline focus:outline-none bg-transparent border-0 cursor-pointer"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                      errors.password 
+                        ? "border-rose-500 ring-1 ring-rose-500" 
+                        : isPasswordFocused 
+                          ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                          : "border-slate-800"
+                    }`}
+                  >
+                    <Lock size={16} className={errors.password ? "text-rose-500" : "text-slate-500"} />
+                    <input
+                      id="password-input"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                      aria-required="true"
+                      aria-invalid={errors.password ? "true" : "false"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="text-slate-500 hover:text-white transition-colors focus:outline-none bg-transparent border-0 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-pulse" role="alert">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setRememberMe(!rememberMe)}
+                    className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors focus:outline-none bg-transparent border-0 cursor-pointer text-left"
+                    role="checkbox"
+                    aria-checked={rememberMe}
+                  >
+                    {rememberMe ? (
+                      <CheckSquare size={16} className="text-[#F2B84C]" />
+                    ) : (
+                      <Square size={16} className="text-slate-600" />
+                    )}
+                    Remember me
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div className="space-y-1">
-              <label htmlFor="email-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Email Address or Username
-              </label>
-              <div 
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
-                  errors.email 
-                    ? "border-rose-500 ring-1 ring-rose-500" 
-                    : isEmailFocused 
-                      ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
-                      : "border-slate-800"
-                }`}
-              >
-                <Mail size={16} className={errors.email ? "text-rose-500" : "text-slate-500"} />
-                <input
-                  id="email-input"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setIsEmailFocused(true)}
-                  onBlur={() => setIsEmailFocused(false)}
-                  placeholder="e.g. fan@fifa2026.com"
-                  className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
-                  aria-required="true"
-                  aria-invalid={errors.email ? "true" : "false"}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-pulse" role="alert">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between items-center">
-                <label htmlFor="password-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Password
-                </label>
-                <a href="#forgot" className="text-[10px] font-bold text-[#F2B84C] hover:underline focus:outline-none">
-                  Forgot Password?
-                </a>
-              </div>
-              <div 
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
-                  errors.password 
-                    ? "border-rose-500 ring-1 ring-rose-500" 
-                    : isPasswordFocused 
-                      ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
-                      : "border-slate-800"
-                }`}
-              >
-                <Lock size={16} className={errors.password ? "text-rose-500" : "text-slate-500"} />
-                <input
-                  id="password-input"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setIsPasswordFocused(true)}
-                  onBlur={() => setIsPasswordFocused(false)}
-                  placeholder="••••••••"
-                  className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
-                  aria-required="true"
-                  aria-invalid={errors.password ? "true" : "false"}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="text-slate-500 hover:text-white transition-colors focus:outline-none"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-pulse" role="alert">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={() => setRememberMe(!rememberMe)}
-                className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors focus:outline-none"
-                role="checkbox"
-                aria-checked={rememberMe}
-              >
-                {rememberMe ? (
-                  <CheckSquare size={16} className="text-[#F2B84C]" />
-                ) : (
-                  <Square size={16} className="text-slate-600" />
+                {isValidated && (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold" role="status">
+                    Access granted! Routing security profiles to the World Cup grid...
+                  </div>
                 )}
-                Remember me
-              </button>
-            </div>
 
-            {isValidated && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold" role="status">
-                Access granted! Routing security profiles to the World Cup grid...
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl bg-[#F2B84C] text-[#0A1524] font-black text-xs uppercase tracking-widest hover:scale-[1.01] active:scale-95 transition-all focus:outline-none shadow-lg shadow-[#F2B84C]/10 cursor-pointer border-0"
+                >
+                  Authenticate Account
+                </button>
+              </form>
+
+              {/* Devpost-style Oauth Block */}
+              <div className="space-y-3 pt-6 border-t border-slate-900">
+                <span className="block text-center text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                  Or connect with your developer account
+                </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleOAuthLogin("google")}
+                    className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.478 0-6.3-2.823-6.3-6.3 0-3.478 2.822-6.3 6.3-6.3 1.63 0 3.11.618 4.242 1.62l3.056-3.056C19.117 2.428 15.892 1.5 12.24 1.5 6.42 1.5 1.7 6.22 1.7 12s4.72 10.5 10.54 10.5 c5.8 0 10.54-4.78 10.54-10.5 0-.715-.083-1.4-.24-2.015H12.24z"/>
+                    </svg>
+                    Google
+                  </button>
+                  <button
+                    onClick={() => handleOAuthLogin("github")}
+                    className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                    </svg>
+                    GitHub
+                  </button>
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-xl bg-[#F2B84C] text-[#0A1524] font-black text-xs uppercase tracking-widest hover:scale-[1.01] active:scale-95 transition-all focus:outline-none shadow-lg shadow-[#F2B84C]/10 cursor-pointer"
-            >
-              Authenticate Account
-            </button>
-          </form>
+              <div className="text-center pt-2">
+                <p className="text-xs text-slate-500 font-medium">
+                  Need stadium credentials?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("register")}
+                    className="text-[#F2B84C] font-bold hover:underline focus:outline-none bg-transparent border-0 cursor-pointer font-heading"
+                  >
+                    Register a new profile
+                  </button>
+                </p>
+              </div>
+            </>
+          )}
 
-          {/* Devpost-style Oauth Block */}
-          <div className="space-y-3 pt-6 border-t border-slate-900">
-            <span className="block text-center text-[9px] font-bold uppercase tracking-widest text-slate-500">
-              Or connect with your developer account
-            </span>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleOAuthLogin("google")}
-                className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.478 0-6.3-2.823-6.3-6.3 0-3.478 2.822-6.3 6.3-6.3 1.63 0 3.11.618 4.242 1.62l3.056-3.056C19.117 2.428 15.892 1.5 12.24 1.5 6.42 1.5 1.7 6.22 1.7 12s4.72 10.5 10.54 10.5 c5.8 0 10.54-4.78 10.54-10.5 0-.715-.083-1.4-.24-2.015H12.24z"/>
-                </svg>
-                Google
-              </button>
-              <button
-                onClick={() => handleOAuthLogin("github")}
-                className="py-2.5 flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all focus:outline-none cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-                </svg>
-                GitHub
-              </button>
-            </div>
-          </div>
+          {viewMode === "register" && (
+            <>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-heading">
+                  Create your StadiumAI profile
+                </h1>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  Join the FIFA World Cup 2026 team to navigate, coordinate, or support matchday operations.
+                </p>
+              </div>
 
-          <div className="text-center pt-2">
-            <p className="text-xs text-slate-500 font-medium">
-              Need stadium credentials?{" "}
-              <button onClick={() => alert("Sign up panel simulator.")} className="text-[#F2B84C] font-bold hover:underline focus:outline-none">
-                Register a new profile
-              </button>
-            </p>
-          </div>
+              <div className="space-y-2">
+                <span className="block text-[10px] font-bold tracking-wider uppercase text-slate-500">
+                  Choose Your Access Level
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Access Role Selector">
+                  {[
+                    { id: "fan", label: "Fan", desc: "Wayfinding & chat" },
+                    { id: "organizer", label: "Organizer", desc: "Ops intelligence" },
+                    { id: "volunteer", label: "Volunteer", desc: "Assignments" },
+                    { id: "staff", label: "Staff", desc: "Venue alerts" },
+                  ].map((role) => {
+                    const isSelected = selectedRole === role.id;
+                    return (
+                      <button
+                        key={role.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setSelectedRole(role.id)}
+                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-[#F2B84C] ${
+                          isSelected 
+                            ? roleStyles[role.id] 
+                            : "border-slate-800 bg-[#0F1E33]/40 text-slate-400 hover:bg-[#0F1E33]/70 hover:text-slate-200"
+                        }`}
+                      >
+                        <span className="font-bold text-xs">{role.label}</span>
+                        <span className="text-[8px] mt-0.5 opacity-70 leading-none">{role.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <form onSubmit={handleRegisterSubmit} className="space-y-4" noValidate>
+                <div className="space-y-1">
+                  <label htmlFor="reg-email-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Email Address
+                  </label>
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                      registerErrors.email 
+                        ? "border-rose-500 ring-1 ring-rose-500" 
+                        : isRegisterEmailFocused 
+                          ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                          : "border-slate-800"
+                    }`}
+                  >
+                    <Mail size={16} className={registerErrors.email ? "text-rose-500" : "text-slate-500"} />
+                    <input
+                      id="reg-email-input"
+                      type="email"
+                      value={registerEmail}
+                      onChange={(e) => setRegisterEmail(e.target.value)}
+                      onFocus={() => setIsRegisterEmailFocused(true)}
+                      onBlur={() => setIsRegisterEmailFocused(false)}
+                      placeholder="e.g. volunteer@fifa2026.com"
+                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                      aria-required="true"
+                    />
+                  </div>
+                  {registerErrors.email && (
+                    <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1" role="alert">
+                      {registerErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="reg-password-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Password
+                  </label>
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                      registerErrors.password 
+                        ? "border-rose-500 ring-1 ring-rose-500" 
+                        : isRegisterPasswordFocused 
+                          ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                          : "border-slate-800"
+                    }`}
+                  >
+                    <Lock size={16} className={registerErrors.password ? "text-rose-500" : "text-slate-500"} />
+                    <input
+                      id="reg-password-input"
+                      type={showRegisterPassword ? "text" : "password"}
+                      value={registerPassword}
+                      onChange={(e) => setRegisterPassword(e.target.value)}
+                      onFocus={() => setIsRegisterPasswordFocused(true)}
+                      onBlur={() => setIsRegisterPasswordFocused(false)}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                      aria-required="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="text-slate-500 hover:text-white cursor-pointer bg-transparent border-0"
+                      aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {registerErrors.password && (
+                    <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1" role="alert">
+                      {registerErrors.password}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="reg-confirm-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Confirm Password
+                  </label>
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                      registerErrors.confirmPassword 
+                        ? "border-rose-500 ring-1 ring-rose-500" 
+                        : isRegisterConfirmFocused 
+                          ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                          : "border-slate-800"
+                    }`}
+                  >
+                    <Lock size={16} className={registerErrors.confirmPassword ? "text-rose-500" : "text-slate-500"} />
+                    <input
+                      id="reg-confirm-input"
+                      type={showRegisterConfirmPassword ? "text" : "password"}
+                      value={registerConfirmPassword}
+                      onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                      onFocus={() => setIsRegisterConfirmFocused(true)}
+                      onBlur={() => setIsRegisterConfirmFocused(false)}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                      aria-required="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterConfirmPassword(!showRegisterConfirmPassword)}
+                      className="text-slate-550 hover:text-white cursor-pointer bg-transparent border-0"
+                      aria-label={showRegisterConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {showRegisterConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {registerErrors.confirmPassword && (
+                    <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1" role="alert">
+                      {registerErrors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-[#F2B84C] hover:bg-[#C99328] text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md hover:scale-[1.01] active:scale-95 border-0"
+                >
+                  Create Account &amp; Log In
+                </button>
+              </form>
+
+              <div className="text-center pt-2">
+                <p className="text-xs text-slate-500 font-medium">
+                  Already have a profile?{" "}
+                  <button onClick={() => setViewMode("login")} className="text-[#F2B84C] font-bold hover:underline focus:outline-none bg-transparent border-0 cursor-pointer">
+                    Log in here
+                  </button>
+                </p>
+              </div>
+            </>
+          )}
+
+          {viewMode === "forgot" && (
+            <>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight font-heading">
+                  Reset Password
+                </h1>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  Enter your registered email address below, and we'll dispatch an AI password recovery link.
+                </p>
+              </div>
+
+              {forgotSubmitted ? (
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-slate-300 space-y-4">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                    <Sparkles size={16} />
+                    <span>AI Recovery Dispatched</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-400 font-medium">
+                    We've analyzed your credentials and sent a secure, single-use password reset link to <strong className="text-white">{sanitizeInput(forgotEmail)}</strong>. Please check your inbox.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setForgotSubmitted(false);
+                      setForgotEmail("");
+                      setViewMode("login");
+                    }}
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-800"
+                  >
+                    Return to Login
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotSubmit} className="space-y-4" noValidate>
+                  <div className="space-y-1">
+                    <label htmlFor="forgot-email-input" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Email Address
+                    </label>
+                    <div 
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 border transition-all duration-200 ${
+                        errors.forgotEmail 
+                          ? "border-rose-500 ring-1 ring-rose-500" 
+                          : isForgotEmailFocused 
+                            ? "border-[#F2B84C] ring-1 ring-[#F2B84C]" 
+                            : "border-slate-800"
+                      }`}
+                    >
+                      <Mail size={16} className={errors.forgotEmail ? "text-rose-500" : "text-slate-500"} />
+                      <input
+                        id="forgot-email-input"
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        onFocus={() => setIsForgotEmailFocused(true)}
+                        onBlur={() => setIsForgotEmailFocused(false)}
+                        placeholder="e.g. user@fifa2026.com"
+                        className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
+                        aria-required="true"
+                      />
+                    </div>
+                    {errors.forgotEmail && (
+                      <p className="text-xs font-semibold text-rose-450 flex items-center gap-1 mt-1" role="alert">
+                        {errors.forgotEmail}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-[#F2B84C] hover:bg-[#C99328] text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md hover:scale-[1.01] active:scale-95 border-0"
+                  >
+                    Send AI Recovery Link
+                  </button>
+
+                  <div className="text-center pt-2">
+                    <button 
+                      type="button"
+                      onClick={() => setViewMode("login")} 
+                      className="text-xs text-slate-400 hover:text-white font-bold hover:underline focus:outline-none bg-transparent border-0 cursor-pointer"
+                    >
+                      ➔ Back to Login
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
+          )}
         </div>
 
         {/* Footer info */}
