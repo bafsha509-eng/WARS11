@@ -53,7 +53,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
     setTimeout(() => {
       setIsLoading(false);
       setIsValidated(true);
-      onLoginSuccess({ email, role: selectedRole });
+      onLoginSuccess({ email: sanitizeInput(email), role: selectedRole });
     }, 1200);
   };
 
