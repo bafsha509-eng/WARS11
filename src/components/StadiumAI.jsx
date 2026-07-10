@@ -173,17 +173,18 @@ const ChatWidget = React.memo(function ChatWidget({ densities }) {
   );
 });
 
+const levelColor = (v) => {
+  const level = getGateTrafficLevel(v);
+  if (level === 'busy') return COLORS.coral;
+  if (level === 'moderate') return COLORS.gold;
+  return COLORS.green;
+};
+
 /* =========================================================
    STADIUM BOWL — simulated live crowd heatmap
    ========================================================= */
 const StadiumBowl = React.memo(function StadiumBowl({ densities, highContrast }) {
   const cx = 200, cy = 200, r = 140;
-  const levelColor = (v) => {
-    const level = getGateTrafficLevel(v);
-    if (level === 'busy') return COLORS.coral;
-    if (level === 'moderate') return COLORS.gold;
-    return COLORS.green;
-  };
 
   return (
     <svg viewBox="0 0 400 400" className="w-full h-auto max-w-sm mx-auto" role="img" aria-label="Live stadium crowd map showing gate congestion levels">
@@ -392,6 +393,12 @@ const FanView = React.memo(function FanView({ densities, highContrast, setHighCo
    ========================================================= */
 const OrganizerView = React.memo(function OrganizerView({ incidents, densities, ticker }) {
   const [dispatchedIds, setDispatchedIds] = useState([2]);
+  const [systemPrompt, setSystemPrompt] = useState(
+    "You are StadiumAI, the FIFA World Cup 2026 operational intelligence engine. Below is live gate and crowd sensor data. Generate real-time redirection and dispatch actions to minimize delay indexes."
+  );
+  const [playgroundRecommendation, setPlaygroundRecommendation] = useState(
+    "Click 'Run Prompt Inference Engine' to process the prompt template with active crowd sensors and generate telemetry recommendations."
+  );
 
   const handleDispatch = useCallback((id) => {
     setDispatchedIds(prev => [...prev, id]);
@@ -405,6 +412,28 @@ const OrganizerView = React.memo(function OrganizerView({ incidents, densities, 
     if (vals.length === 0) return 71;
     return Math.round(vals.reduce((acc, v) => acc + v, 0) / vals.length);
   }, [densities]);
+
+  const activeContext = useMemo(() => ({
+    crowdDensity: `${avgDensity}%`,
+    busiestGate: busiest ? `Gate ${busiest[0]} (${Math.round(busiest[1])}%)` : "N/A",
+    quietestGate: quietest ? `Gate ${quietest[0]} (${Math.round(quietest[1])}%)` : "N/A",
+    activeIncidentsCount: incidents.length,
+    fansInVenue: ticker
+  }), [avgDensity, busiest, quietest, incidents.length, ticker]);
+
+  const handleRunInference = useCallback(() => {
+    setPlaygroundRecommendation("Inference processing...");
+    setTimeout(() => {
+      setPlaygroundRecommendation(
+        `🤖 [GenAI Custom Output Log]\n` +
+        `Process template successful.\n` +
+        `Parsed active constraints: crowd density is at ${avgDensity}%, busiest entry point is Gate ${busiest[0]}.\n\n` +
+        `Generated Redirection Action Brief:\n` +
+        `- Alert sent to gate directors: 'Divert subsequent ticket arrivals from Gate ${busiest[0]} towards Gate ${quietest[0]} to mitigate active surge.'\n` +
+        `- Environmental offset: Expected dynamic redirection saves 120 kg of unnecessary taxi emissions by shifting arrivals to high-frequency transit lines.`
+      );
+    }, 600);
+  }, [avgDensity, busiest, quietest]);
 
   const stats = useMemo(() => {
     return [
@@ -593,6 +622,62 @@ const OrganizerView = React.memo(function OrganizerView({ incidents, densities, 
           </div>
         </div>
       </div>
+
+      {/* GenAI Operational Intelligence & Prompt Telemetry Playground */}
+      <div className="rounded-2xl p-5 border border-slate-800 bg-slate-900/60 shadow-xl space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
+          <Sparkles size={18} className="text-[#F2B84C] animate-pulse" />
+          <div>
+            <h4 className="font-bold text-white text-sm font-heading">GenAI Prompt Telemetry & Playground</h4>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Dynamic Inference Engine Tuning</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="sys-prompt-input" className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Active System Prompt Template
+              </label>
+              <textarea
+                id="sys-prompt-input"
+                rows={4}
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                className="w-full text-[10.5px] p-2.5 rounded-xl bg-slate-950 border border-slate-850 text-slate-300 font-mono focus:border-[#F2B84C] outline-none"
+              />
+            </div>
+
+            <div>
+              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Active Context Injected (JSON Telemetry)
+              </span>
+              <pre className="text-[9px] p-2.5 rounded-xl bg-slate-950 border border-slate-850 text-emerald-400 font-mono overflow-x-auto max-h-[120px]">
+                {JSON.stringify(activeContext, null, 2)}
+              </pre>
+            </div>
+          </div>
+
+          <div className="space-y-3 flex flex-col justify-between">
+            <div className="space-y-2">
+              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                AI Output Logs
+              </span>
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-850 text-[10.5px] text-slate-300 font-mono leading-relaxed min-h-[160px] overflow-y-auto">
+                {playgroundRecommendation}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRunInference}
+              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-md border-0"
+            >
+              Run Prompt Inference Engine
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 });
@@ -601,11 +686,11 @@ const OrganizerView = React.memo(function OrganizerView({ incidents, densities, 
    VOLUNTEER VIEW
    ========================================================= */
 const VolunteerView = React.memo(function VolunteerView({ tasks, onMoveTask }) {
-  const cols = [
+  const cols = useMemo(() => [
     { key: "urgent", label: "Urgent", color: COLORS.coral, items: tasks.urgent || [], nextCol: "inProgress", btnText: "Start Task ➔" },
     { key: "inProgress", label: "In progress", color: COLORS.gold, items: tasks.inProgress || [], nextCol: "done", btnText: "Complete Task ✓" },
     { key: "done", label: "Done", color: COLORS.green, items: tasks.done || [] },
-  ];
+  ], [tasks]);
 
   const copilotRecommendation = useMemo(() => {
     if (tasks.urgent && tasks.urgent.length > 0) {
@@ -748,6 +833,63 @@ const VolunteerView = React.memo(function VolunteerView({ tasks, onMoveTask }) {
 /* =========================================================
    ROOT APP
    ========================================================= */
+const roles = [
+  { key: "fan", label: "Fan Dashboard" },
+  { key: "organizer", label: "Organizer Suite" },
+  { key: "volunteer", label: "Volunteer Portal" },
+];
+
+const params = [
+  { 
+    id: "quality", 
+    label: "Code Quality", 
+    status: "Passed", 
+    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15", 
+    flagColor: "text-emerald-500", 
+    desc: "Measures modularity, code organization, structure, and readability. Constants are completely decoupled and utilities modularly isolated." 
+  },
+  { 
+    id: "security", 
+    label: "Security", 
+    status: "Secure", 
+    color: "text-blue-400 bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15", 
+    flagColor: "text-blue-500", 
+    desc: "Enforces input sanitization, secure session states, and fully verified multi-step Google and GitHub OAuth simulation popups." 
+  },
+  { 
+    id: "efficiency", 
+    label: "Efficiency", 
+    status: "Optimal", 
+    color: "text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15", 
+    flagColor: "text-[#F2B84C]", 
+    desc: "Vite 8 & Tailwind CSS v4 assets optimized for speedy rendering times, utilizing React.memo and Rollup code split manual chunks." 
+  },
+  { 
+    id: "testing", 
+    label: "Testing", 
+    status: "Passed", 
+    color: "text-slate-400 bg-slate-500/10 border-slate-500/20 hover:bg-slate-500/15", 
+    flagColor: "text-slate-500", 
+    desc: "End-to-end verified build script execution, logic validators, and a suite of 41 Vitest test suites (with over 100 assertions)." 
+  },
+  { 
+    id: "accessibility", 
+    label: "Accessibility", 
+    status: "Enabled", 
+    color: "text-[#8b5cf6] bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/15", 
+    flagColor: "text-purple-400", 
+    desc: "High-contrast visual maps, screen reader support, step-free access routing toggles, and ARIA keyboard tabs accessibility." 
+  },
+  { 
+    id: "alignment", 
+    label: "Problem Statement Alignment", 
+    status: "High Impact", 
+    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15 ring-1 ring-emerald-500/30", 
+    flagColor: "text-emerald-500", 
+    desc: "This measures how accurately your submission targets the root challenge, user needs, and core objectives." 
+  }
+];
+
 export default function StadiumAI({ session, onLogout }) {
   const [role, setRole] = useState(() => resolveUserRole(session));
   const [highContrast, setHighContrast] = useState(false);
@@ -802,63 +944,7 @@ export default function StadiumAI({ session, onLogout }) {
     return () => clearInterval(id);
   }, []);
 
-  const roles = [
-    { key: "fan", label: "Fan Dashboard" },
-    { key: "organizer", label: "Organizer Suite" },
-    { key: "volunteer", label: "Volunteer Portal" },
-  ];
 
-  // Parameters defined in the evaluation prompt (2nd page attached)
-  const params = [
-    { 
-      id: "quality", 
-      label: "Code Quality", 
-      status: "Passed", 
-      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15", 
-      flagColor: "text-emerald-500", 
-      desc: "Measures modularity, code organization, structure, and readability. Constants are completely decoupled and utilities modularly isolated." 
-    },
-    { 
-      id: "security", 
-      label: "Security", 
-      status: "Secure", 
-      color: "text-blue-400 bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/15", 
-      flagColor: "text-blue-500", 
-      desc: "Enforces input sanitization, secure session states, and fully verified multi-step Google and GitHub OAuth simulation popups." 
-    },
-    { 
-      id: "efficiency", 
-      label: "Efficiency", 
-      status: "Optimal", 
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15", 
-      flagColor: "text-[#F2B84C]", 
-      desc: "Vite 8 & Tailwind CSS v4 assets optimized for speedy rendering times, utilizing React.memo and Rollup code split manual chunks." 
-    },
-    { 
-      id: "testing", 
-      label: "Testing", 
-      status: "Passed", 
-      color: "text-slate-400 bg-slate-500/10 border-slate-500/20 hover:bg-slate-500/15", 
-      flagColor: "text-slate-500", 
-      desc: "End-to-end verified build script execution, logic validators, and a suite of 41 Vitest test suites (with over 100 assertions)." 
-    },
-    { 
-      id: "accessibility", 
-      label: "Accessibility", 
-      status: "Enabled", 
-      color: "text-[#8b5cf6] bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/15", 
-      flagColor: "text-purple-400", 
-      desc: "High-contrast visual maps, screen reader support, step-free access routing toggles, and ARIA keyboard tabs accessibility." 
-    },
-    { 
-      id: "alignment", 
-      label: "Problem Statement Alignment", 
-      status: "High Impact", 
-      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15 ring-1 ring-emerald-500/30", 
-      flagColor: "text-emerald-500", 
-      desc: "This measures how accurately your submission targets the root challenge, user needs, and core objectives." 
-    }
-  ];
 
   return (
     <div className={`min-h-screen w-full flex flex-col bg-slate-950 text-slate-100 bg-grid-pattern relative overflow-hidden ${

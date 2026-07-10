@@ -1,23 +1,23 @@
 import React from "react";
 import { Sparkles, ArrowRight, Award, Trophy, Users, Shield, Compass } from "lucide-react";
 
+const sponsors = [
+  { name: "FIFA", logo: "🏆" },
+  { name: "Google Cloud", logo: "☁️" },
+  { name: "Microsoft", logo: "💻" },
+  { name: "AWS", logo: "🍊" },
+  { name: "Okta", logo: "🔑" },
+  { name: "Atlassian", logo: "💙" }
+];
+
+const categories = [
+  { name: "Stadium Navigation", count: 12, icon: Compass },
+  { name: "Crowd Safety", count: 8, icon: Shield },
+  { name: "Accessibility", count: 15, icon: Users },
+  { name: "Operational Intelligence", count: 19, icon: Award }
+];
+
 export default function HackathonLanding({ onNavigateToLogin, onNavigateToDashboardDirectly }) {
-  const sponsors = [
-    { name: "FIFA", logo: "🏆" },
-    { name: "Google Cloud", logo: "☁️" },
-    { name: "Microsoft", logo: "💻" },
-    { name: "AWS", logo: "🍊" },
-    { name: "Okta", logo: "🔑" },
-    { name: "Atlassian", logo: "💙" }
-  ];
-
-  const categories = [
-    { name: "Stadium Navigation", count: 12, icon: Compass },
-    { name: "Crowd Safety", count: 8, icon: Shield },
-    { name: "Accessibility", count: 15, icon: Users },
-    { name: "Operational Intelligence", count: 19, icon: Award }
-  ];
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden bg-grid-pattern">
       {/* Background Glows */}

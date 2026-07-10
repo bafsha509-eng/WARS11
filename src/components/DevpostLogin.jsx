@@ -3,6 +3,13 @@ import { Mail, Lock, Eye, EyeOff, CheckSquare, Square, Sparkles, MapPin, ArrowLe
 import { sanitizeInput, validateLogin } from "../utils/helpers";
 import { HOST_CITIES } from "../utils/constants";
 
+const roleStyles = {
+  fan: "bg-emerald-600 text-white ring-2 ring-emerald-600 ring-offset-2 ring-offset-slate-900 border-emerald-500",
+  organizer: "bg-purple-600 text-white ring-2 ring-purple-600 ring-offset-2 ring-offset-slate-900 border-purple-500",
+  volunteer: "bg-amber-600 text-white ring-2 ring-amber-600 ring-offset-2 ring-offset-slate-900 border-amber-500",
+  staff: "bg-yellow-500 text-slate-900 ring-2 ring-yellow-500 ring-offset-2 ring-offset-slate-900 border-yellow-400",
+};
+
 export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -171,12 +178,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
     }, 1200);
   };
 
-  const roleStyles = {
-    fan: "bg-emerald-600 text-white ring-2 ring-emerald-600 ring-offset-2 ring-offset-slate-900 border-emerald-500",
-    organizer: "bg-purple-600 text-white ring-2 ring-purple-600 ring-offset-2 ring-offset-slate-900 border-purple-500",
-    volunteer: "bg-amber-600 text-white ring-2 ring-amber-600 ring-offset-2 ring-offset-slate-900 border-amber-500",
-    staff: "bg-yellow-500 text-slate-900 ring-2 ring-yellow-500 ring-offset-2 ring-offset-slate-900 border-yellow-400",
-  };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#0A1524] text-[#F5F3EC] relative overflow-hidden" role="main">
@@ -534,8 +536,8 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
                       onFocus={() => setIsRegisterEmailFocused(true)}
                       onBlur={() => setIsRegisterEmailFocused(false)}
                       placeholder="e.g. volunteer@fifa2026.com"
-                      className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
                       aria-required="true"
+                      aria-invalid={registerErrors.email ? "true" : "false"}
                     />
                   </div>
                   {registerErrors.email && (
@@ -569,6 +571,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
                       placeholder="••••••••"
                       className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
                       aria-required="true"
+                      aria-invalid={registerErrors.password ? "true" : "false"}
                     />
                     <button
                       type="button"
@@ -610,6 +613,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
                       placeholder="••••••••"
                       className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
                       aria-required="true"
+                      aria-invalid={registerErrors.confirmPassword ? "true" : "false"}
                     />
                     <button
                       type="button"
@@ -703,6 +707,7 @@ export default function DevpostLogin({ onLoginSuccess, onNavigateBack }) {
                         placeholder="e.g. user@fifa2026.com"
                         className="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-600"
                         aria-required="true"
+                        aria-invalid={errors.forgotEmail ? "true" : "false"}
                       />
                     </div>
                     {errors.forgotEmail && (
